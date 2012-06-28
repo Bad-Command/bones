@@ -33,7 +33,7 @@ minetest.register_node("bones:bones", {
 	tile_images ={"bones_top.png", "bones_bottom.png", "bones_side.png",
 		"bones_side.png", "bones_rear.png", "bones_front.png"},
 	paramtype2 = "facedir",
-	groups = {snappy=2,choppy=2,oddly_breakable_by_hand=2},
+	groups = {crumbly=2},
 	paramtype = "light",
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.45},
