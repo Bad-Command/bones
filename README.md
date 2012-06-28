@@ -1,0 +1,4 @@
+bones
+=====
+
+Minetest bones mod
