@@ -25,15 +25,19 @@ bones.replaceable_node_types = {
 	"air"
 }
 
-bones.inventory_take = function(pos, listname, index, count, player)
+bones.allow_inventory_take = function(pos, listname, index, stack, player)
 	local meta = minetest.env:get_meta(pos)
 	if not bones.privilege(meta, player) then
 		minetest.log("action", player:get_player_name()..
 				" tried to access bones belonging to "..
 				meta:get_string("owner").." at "..
 				minetest.pos_to_string(pos))
-		return
+		return 0
 	end
+	return stack:get_count()
+end
+
+bones.on_inventory_take = function(pos, listname, index, stack, player)
 	local fresh = meta:get_int("fresh") or 1
 	if fresh > 0 then
 		fresh = "fresh"
@@ -42,8 +46,6 @@ bones.inventory_take = function(pos, listname, index, count, player)
 	end
 	minetest.log("action", player:get_player_name()..
 			" picks from "..meta:get_string("owner").."'s "..fresh.." bones at "..minetest.pos_to_string(pos))
-	return minetest.node_metadata_inventory_take_allow_all(
-			pos, listname, index, count, player)
 end
 
 bones.privilege=function(meta, player)
@@ -62,11 +64,13 @@ end
 bones.action=function(pos, node, active_object_count, active_object_count_wider)
 	local meta = minetest.env:get_meta(pos)
 	local fresh = meta:get_int("fresh") or 0
-	local bonetime = meta:get_float("bonetime") or 0
-	if fresh > 0 and worldtime_get() - bonetime >  bones.age_after then
-		local name = meta:get_string("owner") or ""
-		meta:set_string("infotext", name .. "'s old bones")
-		meta:set_int("fresh", -1)
+	if fresh > 0 then
+		local bonetime = meta:get_float("bonetime") or 0
+		if worldtime_get() - bonetime >  bones.age_after then
+			local name = meta:get_string("owner") or ""
+			meta:set_string("infotext", name .. "'s old bones")
+			meta:set_int("fresh", -1)
+		end
 	end
 end	
 
@@ -130,6 +134,51 @@ bones.settle_type = function(nodename)
 	end
 	return false
 end
+
+bones.on_punch = function(pos, node, player)
+	if node == nil or node.name ~= "bones:bones" then
+		return
+	end
+	
+	local meta = minetest.env:get_meta(pos)
+
+	local fresh = meta:get_int("fresh") or 0
+	if fresh == 0  then
+		return
+	end
+
+	local name = player:get_player_name()
+	if name ~= meta:get_string("owner") then
+		return
+	end
+
+	local meta = minetest.env:get_meta(pos)
+	local bones_inv = meta:get_inventory()
+	if ( bones_inv == nil ) then
+		return
+	end
+	
+	local player_inv = player:get_inventory()
+	if ( player_inv == nil ) then
+		minetest.log("error", 'Bones:  Unable to get player '..name..' inventory')
+		return
+	end
+
+	for i=1,32 do
+		local stack = bones_inv:get_stack("main", i)
+		if stack ~= nil and not stack:is_empty() then
+			local leftover = player_inv:add_item("main", stack)
+			bones_inv:set_stack("main", i, nil)
+			if leftover ~= nil and not leftover:is_empty() then
+				bones_inv:set_stack("main", i, leftover)
+			else
+				bones_inv:set_stack("main", i, nil)
+			end
+		end
+	end
+	minetest.log("action", name.." unloaded his fresh bones at "..minetest.pos_to_string(pos))
+end
+
 
 bones.settle_bones = function(pos) 
 	local nextpos = pos; 

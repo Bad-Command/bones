@@ -18,7 +18,7 @@
 ----
 
 bones = {}
-bones.version = 1.01
+bones.version = 1.02
 
 -- config.lua contains configuration parameters
 dofile(minetest.get_modpath("bones").."/config.lua")
@@ -44,13 +44,14 @@ minetest.register_node("bones:bones", {
 		local inv = meta:get_inventory()
 		return inv == nil or inv:is_empty("main")
 	end,
-	on_metadata_inventory_move = function(pos, from_list, from_index,
-			to_list, to_index, count, player)
+	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
+		return 0
 	end,
-	on_metadata_inventory_offer = function(pos, listname, index, stack, player)
-		return stack
+	allow_metadata_inventory_move = function(pos, listname, index, stack, player)
+		return 0
 	end,
-   	on_metadata_inventory_take = bones.inventory_take,
+	allow_metadata_inventory_take = bones.allow_inventory_take,
+   	on_metadata_inventory_take = bones.inventory_take
 })
 
 minetest.register_abm(
@@ -61,4 +62,5 @@ minetest.register_abm(
 })
 
 minetest.register_on_dieplayer(bones.on_dieplayer)
+minetest.register_on_punchnode(bones.on_punch)
 
