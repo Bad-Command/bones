@@ -1,5 +1,5 @@
 ---
---Bones 1.01
+--Bones 1.02
 --Copyright (C) 2012 Bad_Command
 --
 --This library is free software; you can redistribute it and/or
